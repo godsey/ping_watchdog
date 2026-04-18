@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+!usr/local/bin/
+!usr/local/bin/**
+usr/local/bin/__pycache__/
+usr/local/bin/**/*.pyc

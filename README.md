@@ -42,7 +42,7 @@ reboot wipes the state and the arming step starts over. That's intentional.
 sudo ./install.sh
 ```
 
-The installer copies the script to `/root/ping_watchdog.py`, the env file to
+The installer copies the script to `/usr/local/bin/ping_watchdog.py`, the env file to
 `/etc/default/ping_watchdog`, and the two systemd units to
 `/etc/systemd/system/`. It then reloads systemd and enables the timer.
 
@@ -67,14 +67,16 @@ The knobs that tend to matter:
 - `VERBOSE` — print every check, not just the interesting ones. Useful
   while you're dialing things in.
 - `DRY_RUN` — log what it would do, without actually resetting or starting
-  anything. Leave this on for the first run.
+  anything. Leave this on for the first run, but treat it as a limited
+  preview rather than a full simulation.
 - `VMIDS` — space-separated list of VMIDs if you only want to watch a
   subset. Blank means all VMs.
 
 The same options exist as command-line flags (`--dry-run`, `--verbose`,
-`--fail-count`, `--auto-start`, `--auto-start-count`, `--vmid`). The flags
-override the env file, so running the script by hand for testing doesn't
-require touching `/etc/default/ping_watchdog`.
+`--fail-count`, `--auto-start`, `--auto-start-count`, `--vmid`). Boolean
+flags also support explicit negation (`--no-dry-run`, `--no-verbose`,
+`--no-auto-start`). The flags override the env file, so running the script
+by hand for testing doesn't require touching `/etc/default/ping_watchdog`.
 
 ## Watching the logs
 
@@ -100,6 +102,20 @@ I'd recommend flipping `VERBOSE=true` and `DRY_RUN=true` for the first day or
 so, skimming `journalctl -t qm-agent-watchdog`, and then turning both off
 once the output looks right.
 
+`DRY_RUN` is intentionally not exhaustive. The watchdog changes behavior based
+on observed VM state over time, and dry-run mode does not perform the reset or
+start actions that would normally cause later checks to see different results.
+Use it to confirm scope and logging, not as a full end-to-end rehearsal.
+
+## Startup Order Scope
+
+Startup order is evaluated only among monitored VMs. If you limit monitoring
+with `VMIDS` or `--vmid`, an unmonitored VM with a lower startup order will
+not block a monitored VM from being auto-started.
+
+If you need strict startup ordering across a larger set of VMs, monitor all of
+the VMs that participate in that ordering.
+
 ## Uninstall
 
 There's no uninstall script. It's four files:
@@ -109,7 +125,7 @@ systemctl disable --now ping_watchdog.timer
 rm /etc/systemd/system/ping_watchdog.timer
 rm /etc/systemd/system/ping_watchdog.service
 rm /etc/default/ping_watchdog
-rm /root/ping_watchdog.py
+rm /usr/local/bin/ping_watchdog.py
 systemctl daemon-reload
 ```
 

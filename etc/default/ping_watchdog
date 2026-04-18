@@ -60,6 +60,11 @@ VERBOSE=true
 #         - no qm start
 #         - no state changes
 #
+# Important limitation:
+#   dry-run is not a full simulation of production behavior across repeated
+#   runs, because the reset/start actions that would normally change later
+#   observations are never performed.
+#
 # false = normal production mode
 #
 # Recommended:
@@ -84,6 +89,11 @@ DRY_RUN=false
 #   VM101 startup: order=2
 #
 # If both are down, VM100 is handled first.
+#
+# Note:
+#   startup order is evaluated only among monitored VMs. If you use VMIDS or
+#   CLI --vmid filters, an unmonitored lower-order VM does not block a
+#   monitored higher-order VM from being started.
 AUTO_START=true
 
 
@@ -133,4 +143,3 @@ STATE_DIR=/run/qm-agent-watchdog
 # Or if using systemd unit:
 #   journalctl -u ping_watchdog.service
 LOGGER_TAG=qm-agent-watchdog
-

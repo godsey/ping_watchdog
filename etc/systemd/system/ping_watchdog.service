@@ -6,4 +6,4 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=-/etc/default/ping_watchdog
-ExecStart=/usr/bin/python3 /root/ping_watchdog.py
+ExecStart=/usr/local/bin/ping_watchdog.py

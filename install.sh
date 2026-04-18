@@ -7,12 +7,12 @@ set -eu
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-SCRIPT_SRC="$REPO_DIR/root/ping_watchdog.py"
+SCRIPT_SRC="$REPO_DIR/usr/local/bin/ping_watchdog.py"
 DEFAULTS_SRC="$REPO_DIR/etc/default/ping_watchdog"
 SERVICE_SRC="$REPO_DIR/etc/systemd/system/ping_watchdog.service"
 TIMER_SRC="$REPO_DIR/etc/systemd/system/ping_watchdog.timer"
 
-SCRIPT_DST="/root/ping_watchdog.py"
+SCRIPT_DST="/usr/local/bin/ping_watchdog.py"
 DEFAULTS_DST="/etc/default/ping_watchdog"
 SERVICE_DST="/etc/systemd/system/ping_watchdog.service"
 TIMER_DST="/etc/systemd/system/ping_watchdog.timer"
@@ -34,6 +34,13 @@ is_proxmox() {
     [ -d /etc/pve ] && return 0
     command -v pveversion >/dev/null 2>&1 && return 0
     return 1
+}
+
+check_dependencies() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "Error: python3 is not installed."
+        exit 1
+    fi
 }
 
 while [ $# -gt 0 ]; do
@@ -59,6 +66,8 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+check_dependencies
+
 if ! is_proxmox; then
     if [ "$FORCE" != "true" ]; then
         echo "This host does not appear to be Proxmox VE."
@@ -76,8 +85,8 @@ for f in "$SCRIPT_SRC" "$DEFAULTS_SRC" "$SERVICE_SRC" "$TIMER_SRC"; do
     fi
 done
 
-echo "Installing ping_watchdog.py"
-install -m 0600 "$SCRIPT_SRC" "$SCRIPT_DST"
+echo "Installing ping_watchdog.py to $SCRIPT_DST"
+install -m 0755 "$SCRIPT_SRC" "$SCRIPT_DST"
 
 echo "Installing /etc/default/ping_watchdog"
 install -m 0644 "$DEFAULTS_SRC" "$DEFAULTS_DST"
