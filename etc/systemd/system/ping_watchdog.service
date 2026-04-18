@@ -1,0 +1,9 @@
+[Unit]
+Description=Proxmox guest agent ping watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/ping_watchdog
+ExecStart=/usr/bin/python3 /root/ping_watchdog.py

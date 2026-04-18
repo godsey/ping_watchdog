@@ -1,0 +1,136 @@
+# Full path to the Proxmox qm command used by ping_watchdog.py
+#
+# Default on most Proxmox systems:
+#   /usr/sbin/qm
+#
+# Useful when:
+#   - running from systemd with a minimal PATH
+#   - running from cron
+#   - using sudo / restricted shells
+#   - wanting an explicit known binary path
+#
+# Check location with:
+#   which qm
+#
+# Test manually:
+#   /usr/sbin/qm list
+#
+# If qm is moved or installed elsewhere:
+#   QM_PATH=/some/other/path/qm
+#
+# Recommended:
+#   leave as /usr/sbin/qm on normal Proxmox installs
+QM_PATH=/usr/sbin/qm
+
+
+# Number of consecutive failed guest-agent ping checks required before a running VM is force-reset with:
+#   qm reset <vmid>
+#
+# Example:
+#   FAIL_COUNT=3
+#
+# If the timer runs every 1 minute:
+#   3 = reset after ~3 minutes of failed pings
+#   5 = reset after ~5 minutes
+#
+# Applies only to VMs that:
+#   - are running
+#   - are not locked
+#   - have qemu guest agent enabled
+#   - were previously healthy (watchdog armed)
+FAIL_COUNT=3
+
+
+# Enable verbose logging.
+#
+# true  = log healthy checks, skipped VMs, startup order waits, counters
+# false = log only meaningful events:
+#         failures, resets, starts, errors
+#
+# Recommended:
+#   true  while testing
+#   false for long-term production use
+VERBOSE=true
+
+
+# Safety mode.
+#
+# true  = simulate actions only
+#         - no qm reset
+#         - no qm start
+#         - no state changes
+#
+# false = normal production mode
+#
+# Recommended:
+#   true  for first-time testing
+#   false after validation
+DRY_RUN=false
+
+
+# Automatically start VMs that should normally be online but are currently stopped/shutdown.
+#
+# VM must meet ALL conditions:
+#   - status is stopped or shutdown
+#   - not locked
+#   - Proxmox config has:
+#         onboot: 1
+#
+# If multiple VMs are down:
+#   only the LOWEST startup order group is considered each run
+#
+# Example:
+#   VM100 startup: order=1
+#   VM101 startup: order=2
+#
+# If both are down, VM100 is handled first.
+AUTO_START=true
+
+
+# Number of consecutive checks a stopped/shutdown VM must remain down before the script issues:
+#   qm start <vmid>
+#
+# Example:
+#   AUTO_START_COUNT=5
+#
+# If timer runs every 1 minute:
+#   5 = start attempt after ~5 minutes down
+#
+# Helps avoid accidental starts during temporary transitions.
+AUTO_START_COUNT=5
+
+
+# Optional list of VMIDs to monitor.
+#
+# Blank = monitor ALL VMs from qm list
+#
+# Example single VM:
+# VMIDS="1001"
+#
+# Example multiple VMs:
+# VMIDS="1000 1001 1100"
+#
+# Useful when only certain VMs should be managed.
+VMIDS=
+
+
+# Directory used to store runtime state files.
+#
+# Contains one JSON file per VM with counters such as:
+#   fail_count
+#   auto_start_count
+#   seen_good
+#
+# /run is temporary RAM-backed storage and clears on reboot.
+STATE_DIR=/run/qm-agent-watchdog
+
+
+# Syslog / journal tag used when writing logs through logger.
+#
+# View logs with:
+#   journalctl -t qm-agent-watchdog
+#
+# Or if using systemd unit:
+#   journalctl -u ping_watchdog.service
+LOGGER_TAG=qm-agent-watchdog
+
